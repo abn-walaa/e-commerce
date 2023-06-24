@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken')
 let User = require('../db/modules/users')
-exports.auth = async (req, res, next) => {
+
+const auth = async (req, res, next) => {
     try {
         let [code, token] = req.headers.Authorization.splite(" ")
         if (code !== "Bearer") {
@@ -19,3 +20,4 @@ exports.auth = async (req, res, next) => {
         res.status(400).send({ error: error })
     }
 }
+module.exports = auth

@@ -11,6 +11,8 @@ const Sch = new mongoose.Schema({
         required: true,
         ref: "users"
     }
+}, {
+    timestamps: true
 });
 // hide info
 Sch.methods.toJSON = async () => {

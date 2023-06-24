@@ -51,7 +51,7 @@ router.delete('/logout', auth, async (req, res) => {
     }
 })
 //log out of all tokens
-router.delete('/logout', auth, async (req, res) => {
+router.delete('/logoutAll', auth, async (req, res) => {
     try {
         let user = req.user
         user.tokens = []

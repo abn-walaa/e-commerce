@@ -15,18 +15,19 @@ const Sch = new mongoose.Schema({
     },
     imgs: [{
         img: Buffer,
-        required: true
     }],
     owner: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
         ref: "users"
     },
-    collection: {
+    Collection: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
         ref: "collection"
     }
+}, {
+    timestamps: true
 })
 
 Sch.methods.toJSON = async () => {

@@ -31,6 +31,8 @@ const Schema = new mongoose.Schema({
             type: String
         }
     }]
+}, {
+    timestamps: true
 })
 
 // GEN TOKEN
