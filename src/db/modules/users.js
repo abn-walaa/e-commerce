@@ -1,15 +1,15 @@
 const mongoose = require('mongoose')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
-
+const validator = require('validator')
 const Schema = new mongoose.Schema({
     name: {
         type: String,
-        required: true
+        required: [true, "Plase enter the name filed"]
     },
     email: {
         type: String,
-        required: true,
+        required: [true, "Plase enter  email !"],
         unique: true,
         validate(v) {
             if (!validator.isEmail(v)) {
@@ -20,7 +20,7 @@ const Schema = new mongoose.Schema({
     password: {
         type: String,
         required: true,
-        mixLength: 6
+        minLength: [5, 'min length is 6']
     },
     roll: {
         type: String,
@@ -36,8 +36,9 @@ const Schema = new mongoose.Schema({
 })
 
 // GEN TOKEN
-Schema.methods.genToken = async () => {
+Schema.methods.genToken = async function () {
     let user = this
+
     let token = jwt.sign({ _id: user.id.toString() }, process.env.JWT)
     user.tokens = user.tokens.concat({ token })
     await user.save()
@@ -45,14 +46,14 @@ Schema.methods.genToken = async () => {
 }
 
 // PER THE SAVE HASH THE PASSWORD
-Schema.pre('save', (next) => {
+Schema.pre('save', function (next) {
     if (this.isModified('password')) {
         this.password = bcrypt.hashSync(this.password, 8)
     }
     next()
 })
 // delete info
-Schema.methods.toJSON = async () => {
+Schema.methods.toJSON = function () {
     let user = this
     user = user.toObject()
     delete user.password

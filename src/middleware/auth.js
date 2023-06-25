@@ -1,9 +1,13 @@
 const jwt = require('jsonwebtoken')
 let User = require('../db/modules/users')
-
+let errorHandling = require('../controllers/ErrorHandling')
 const auth = async (req, res, next) => {
     try {
-        let [code, token] = req.headers.Authorization.splite(" ")
+        if (!req.headers.authorization) {
+            throw new Error("Headers missing !")
+        }
+
+        let [code, token] = req.headers.authorization.split(" ")
         if (code !== "Bearer") {
             throw new Error("Header missing !")
         }
@@ -17,7 +21,7 @@ const auth = async (req, res, next) => {
         req.token = token;
         next()
     } catch (error) {
-        res.status(400).send({ error: error })
+        errorHandling(res, error)
     }
 }
 module.exports = auth

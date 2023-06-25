@@ -1,20 +1,19 @@
 const mongoose = require('mongoose')
 
 const Sch = new mongoose.Schema({
-    name: {
+    title: {
         type: String,
         required: true
     },
     description: {
         type: String,
-        required: true
     },
     price: {
         type: Number,
         required: true,
     },
     imgs: [{
-        img: Buffer,
+        buffer: Buffer,
     }],
     owner: {
         type: mongoose.Schema.Types.ObjectId,
@@ -30,11 +29,13 @@ const Sch = new mongoose.Schema({
     timestamps: true
 })
 
-Sch.methods.toJSON = async () => {
+Sch.methods.toJSON = function () {
     let product = this
     product = product.toObject()
+    product.imgURL = product.imgs.map((e, i) => process.env.URL_ProductIMG + product._id + "/" + i)
     delete product.imgs
     delete product.owner
+
     return product
 }
 const products = mongoose.model('products', Sch)

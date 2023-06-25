@@ -6,6 +6,7 @@ const Products = require('../db/modules/products')
 const Users = require('../db/modules/users')
 const sharp = require('sharp')
 const multer = require('multer')
+const errorHandling = require('../controllers/ErrorHandling')
 // buffering upload
 const upload = multer({
     limits: {
@@ -22,39 +23,40 @@ const upload = multer({
 //ADD products
 router.post('/product', upload.array('imgs', 10), async (req, res) => {
     try {
-        if (!req.files) {
-            throw new Error(" img missed")
+        if (!req.files[0]?.buffer) {
+            throw new Error("imgs missing")
         }
         // check collection
-        let collection = await Collection.findById(req.body.id)
+        let collection = await Collection.findById(req.body.collection)
         if (!collection) {
             throw new Error("The collection Not found ! ")
         }
-        const imgs = req.files.map(async e => {
+        const imgs = await Promise.all(req.files.map(async e => {
             let buffer = await sharp(e.buffer).webp({ lossless: true }).toBuffer()
-            return { buffer }
-        })
+            return { buffer: buffer }
+        }))
         let product = new Products({
-            name: req.body.name,
+            title: req.body.title,
             description: req.body.description,
             price: req.body.price,
-            imgs,
+            imgs: imgs,
             owner: req.user.id,
             Collection: req.body.collection
         })
 
         await product.save()
+
         res.send(product)
     } catch (error) {
-        console.log(error)
-        res.status(400).send(error)
+        errorHandling(res, error)
     }
 })
 // upadate product
 router.patch('/product/:id', upload.array('imgs', 10), async (req, res) => {
     try {
+
         let updates = Object.keys(req.body)
-        let allowed = ["name", "description", "price", "imgs", "Collection"]
+        let allowed = ["title", "description", "price", "imgs", "Collection"]
         let check = updates.every(e => allowed.includes(e))
         if (!check) {
             throw new Error("invalid value !")
@@ -84,8 +86,7 @@ router.patch('/product/:id', upload.array('imgs', 10), async (req, res) => {
         await product.save()
         res.send(product)
     } catch (error) {
-        console.log(error)
-        res.status(400).send(error)
+        errorHandling(res, error)
     }
 })
 // delete producte
@@ -99,8 +100,7 @@ router.delete('/product/', async (req, res) => {
         }
         res.send()
     } catch (error) {
-        console.log(error)
-        res.status(400).send(error)
+        errorHandling(res, error)
     }
 })
 // ADD collection 
@@ -112,10 +112,10 @@ router.post('/collection', async (req, res) => {
             owner: req.user.id
         })
         await collection.save()
+
         res.send(collection)
     } catch (error) {
-        console.log(error)
-        res.status(400).send(error)
+        errorHandling(res, error)
     }
 })
 // update collection 
@@ -131,8 +131,7 @@ router.patch('/collection/:id', async (req, res) => {
         await collection.save()
         res.send(collection)
     } catch (error) {
-        console.log(error)
-        res.status(400).send(error)
+        errorHandling(res, error)
     }
 })
 // delete collection 
@@ -146,7 +145,9 @@ router.delete('/collection/', async (req, res) => {
         }
         res.send()
     } catch (error) {
-        console.log(error)
-        res.status(400).send(error)
+        errorHandling(res, error)
     }
 })
+
+
+module.exports = router
