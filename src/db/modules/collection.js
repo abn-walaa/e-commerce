@@ -24,6 +24,7 @@ Sch.methods.toJSON = function () {
     return collection
 }
 
+
 const Collection = mongoose.model('collections', Sch);
 
 module.exports = Collection

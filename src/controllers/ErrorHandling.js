@@ -16,9 +16,16 @@ const errorHandling = (res, error) => {
 
     if (error.message.includes("validation failed:")) {
         errors.message = ""
+
         Object.keys(error.errors).forEach(e => {
-            errors.message += error.errors[e].properties.message + " "
-            errors[e] = error.errors[e].properties.message
+            if (error.errors[e].properties) {
+                errors.message += error.errors[e].properties?.message + " "
+                errors[e] = error.errors[e].properties?.message
+            } else if (error.errors[e].message) {
+                errors.message += "failed for " + e + " "
+                errors[e] = " failed for " + e
+            }
+
         })
 
         res.send({ errors })

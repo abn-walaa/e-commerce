@@ -3,28 +3,89 @@ const router = express.Router()
 
 const Collection = require('../db/modules/collection')
 const Products = require('../db/modules/products')
+const mongoose = require('mongoose')
+const errorHandling = require('../controllers/ErrorHandling')
 // return all collections
-router.post('/all', async (req, res) => {
+router.get('/all', async (req, res) => {
     try {
-        let collection = await Collection.find({});
+        let collection = await Collection.find();
         res.send(collection)
     } catch (error) {
-        console.log(error)
-        res.status(400).send({ error })
+        errorHandling(res, error)
     }
 })
+
 // return one collection 
 router.post('/:id', async (req, res) => {
     try {
-        let products = await Products.find({ collection: req.params.id });
+        let $skip = req.body.skip || 0
+        let $limit = req.body.limit || 5
+
+        let products = await Products.aggregate([{
+            $match: { "Collection": { $eq: new mongoose.Types.ObjectId(req.params.id) } }
+        }, {
+            // get the collection info
+            $lookup: {
+                from: "collections",
+                localField: "Collection",
+                foreignField: "_id",
+                as: "Collection"
+            },
+        },
+        {
+            $unwind: {
+                path: "$Collection"
+            },
+        }, {
+            // get the owner of the product
+            $lookup: {
+                from: "users",
+                localField: "owner",
+                foreignField: "_id",
+                as: "owner"
+            },
+        },
+        {
+            // jsut one value
+            $unwind: {
+                path: "$owner"
+            },
+        }, {
+            // Filtering the out data
+            $project: {
+                "_id": 1,
+                title: 1,
+                description: 1,
+                price: 1,
+                owner: {
+                    name: 1,
+                    _id: 1
+                },
+                imgs: 1,
+                Collection: {
+                    _id: 1,
+                    name: 1
+                },
+                createdAt: 1,
+                updatedAt: 1
+            }
+        }, { $skip }, {
+            $limit
+        },])
+        // delete the img for the size of the requet and set a img url
+        products.forEach(product => {
+            product.imgURL = product.imgs.map((e, i) => process.env.URL_ProductIMG + product._id + "/" + i)
+            delete product.imgs
+        })
         products = products.map(product => {
-            product.imgURL = product.imgs(e => process.env.URL + e.id)
+            if (product.imgs) {
+                product.imgURL = product.imgs.map(e => process.env.URL + e.id)
+            }
             return product
         })
         res.send(products)
     } catch (error) {
-        console.log(error)
-        res.status(400).send({ error })
+        errorHandling(res, error)
     }
 })
 module.exports = router

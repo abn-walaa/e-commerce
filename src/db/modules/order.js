@@ -4,6 +4,7 @@ const Sch = new mongoose.Schema({
     products: [{
         product: {
             type: mongoose.Schema.Types.ObjectId,
+            ref: "products"
         },
         howmMach: {
             type: Number,
@@ -17,7 +18,8 @@ const Sch = new mongoose.Schema({
     owner: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
-        ref: "user"
+        ref: "user",
+        index: true
     },
     status: {
         type: String,

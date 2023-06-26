@@ -14,12 +14,15 @@ const product = require('./routers/products')
 app.use('/products', product)
 //  collections 
 const collections = require('./routers/collection')
-app.use('/products', collections)
+app.use('/collection', collections)
 // admin
 const auth = require('./middleware/auth')
 const isAdmin = require('./middleware/isAdmin')
 const admin = require('./routers/admin')
 app.use('/admin', auth, isAdmin, admin)
+// order 
+const order = require('./routers/order')
+app.use('/order/', auth, order)
 app.listen(3000, () => {
     console.log("server is up")
 })

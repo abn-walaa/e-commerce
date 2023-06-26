@@ -23,7 +23,8 @@ const Sch = new mongoose.Schema({
     Collection: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
-        ref: "collection"
+        ref: "collections",
+        index: true
     }
 }, {
     timestamps: true

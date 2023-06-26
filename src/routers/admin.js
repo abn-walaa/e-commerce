@@ -7,6 +7,7 @@ const Users = require('../db/modules/users')
 const sharp = require('sharp')
 const multer = require('multer')
 const errorHandling = require('../controllers/ErrorHandling')
+const { Types: { ObjectId: { isValid } } } = require('mongoose')
 // buffering upload
 const upload = multer({
     limits: {
@@ -54,46 +55,56 @@ router.post('/product', upload.array('imgs', 10), async (req, res) => {
 // upadate product
 router.patch('/product/:id', upload.array('imgs', 10), async (req, res) => {
     try {
-
-        let updates = Object.keys(req.body)
-        let allowed = ["title", "description", "price", "imgs", "Collection"]
-        let check = updates.every(e => allowed.includes(e))
-        if (!check) {
-            throw new Error("invalid value !")
+        // check for the id
+        if (!isValid(req.params.id)) {
+            throw new Error("The id is not valed")
         }
         // check for product
-        let product = await Products.findById(req.params.id)
+        let product = await Products.findOne({ _id: req.params.id })
+
         if (!product) {
             res.status(404).send();
             return;
         }
         // check collection
-        let collection = await Collection.findById(req.body.id)
-        if (!collection) {
-            throw new Error("The collection Not found ! ")
+        if (req.body.collection) {
+            let collection = await Collection.findById(req.body.collection)
+            if (!collection) {
+                throw new Error("The collection Not found ! ")
+            }
+            product.Collection = collection
         }
-
-        if (req.files) {
-            const imgs = req.files.map(async e => {
+        // put the now pic as webp
+        if (req.files.length !== 0) {
+            const imgs = await Promise.all(req.files.map(async e => {
                 let buffer = await sharp(e.buffer).webp({ lossless: true }).toBuffer()
-                return { buffer }
-            })
+                return { buffer: buffer }
+            }))
             product.imgs = imgs;
         }
-        updates.forEach(e => {
-            product[e] = req.body[e]
-        })
+        //
+        product.price = req.body.price ? req.body.price : product.price
+        product.title = req.body.title ? req.body.title : product.title
+        product.description = req.body.description ? req.body.description : product.description
+
         await product.save()
+
         res.send(product)
     } catch (error) {
+        // console.log(error)
         errorHandling(res, error)
     }
 })
 // delete producte
 router.delete('/product/', async (req, res) => {
     try {
+        // check for the id
+        if (!isValid(req.body.id)) {
+            throw new Error("The id is not valed")
+        }
         // check for product
         let product = await Products.deleteOne({ id: req.body.id })
+
         if (!product.acknowledged) {
             res.status(400).send();
             return;
@@ -119,11 +130,11 @@ router.post('/collection', async (req, res) => {
     }
 })
 // update collection 
-router.patch('/collection/:id', async (req, res) => {
+router.patch('/collection/', async (req, res) => {
     try {
         // check for product
 
-        let collection = await Collection.findById(req.params.id)
+        let collection = await Collection.findById(req.body.id)
         if (!collection) {
             throw new Error("collection Not found !")
         }
@@ -138,11 +149,13 @@ router.patch('/collection/:id', async (req, res) => {
 router.delete('/collection/', async (req, res) => {
     try {
         // check for product
-        let collection = await Collection.deleteOne(req.bpdy.id)
+
+        let collection = await Collection.deleteOne({ _id: req.body.id })
         if (!collection.acknowledged) {
             res.status(400).send();
             return;
         }
+
         res.send()
     } catch (error) {
         errorHandling(res, error)

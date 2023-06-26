@@ -65,8 +65,7 @@ router.post('/all', async (req, res) => {
         })
         res.send(products)
     } catch (error) {
-        console.log(error)
-        res.status(400).send({ error })
+        errorHandling(res, error)
     }
 })
 // return one product 
@@ -76,8 +75,7 @@ router.get('/:id', async (req, res) => {
         let product = await Products.findById(id).populate('collection');
         res.send(product)
     } catch (error) {
-        console.log(error)
-        res.status(400).send({ error })
+        errorHandling(res, error)
     }
 })
 // router get prodect img
@@ -87,8 +85,7 @@ router.get('/:id/:num', async (req, res) => {
         res.set('Content-Type', 'image/webp');
         res.send(product.imgs[req.params.num].buffer)
     } catch (error) {
-        console.log(error)
-        res.status(400).send({ error })
+        errorHandling(res, error)
     }
 })
 
