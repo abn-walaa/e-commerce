@@ -57,9 +57,15 @@ router.post('/', async (req, res) => {
 
         let $skip = req.body.skip || 0
         let $limit = req.body.limit || 5
+
         let orders = await Order.aggregate([
             {
-                $match: { "owner": new Types.ObjectId(req.user.id) }
+                $match: {
+                    owner: req.user._id
+                }
+            },
+            {
+                $sort: { createdAt: -1 }
             },
             {
                 $lookup: {
@@ -85,7 +91,7 @@ router.post('/', async (req, res) => {
                 }
             }
         ]);
-
+        let TypeOfOrders = await Order.distinct("status")
         orders.forEach(order => {
             order.products = order.products.map(items => {
                 // find from the join into the products.product
@@ -100,7 +106,7 @@ router.post('/', async (req, res) => {
             delete order.joind
 
         })
-        res.send(orders)
+        res.send({ orders, TypeOfOrders })
     } catch (error) {
         errorHandling(res, error)
     }
@@ -111,17 +117,45 @@ router.get('/:id', async (req, res) => {
         if (!isValidObjectId(req.params.id)) {
             throw new Error("Product isn't valid")
         }
-
-        let order = await Order.findOne({ owner: req.user.id, _id: req.params.id }).populate({ path: 'products.product' })
-
+        // maby cuz n+1 
+        // let order = await Order.findOne({ owner: req.user.id, _id: req.params.id }).populate({ path: 'products.product' })
+        let order = await Order.aggregate([
+            {
+                $match: { _id: new Types.ObjectId(req.params.id), "owner": new Types.ObjectId(req.user.id) }
+            },
+            {
+                $lookup: {
+                    from: 'products',
+                    localField: 'products.product',
+                    foreignField: '_id',
+                    as: 'joind'
+                }
+            },
+            {
+                $project: {
+                    joind: {
+                        owner: 0
+                    },
+                    products: {
+                        _id: 0
+                    }
+                }
+            }
+        ]);
+        order = order[0]
         order.products = order.products.map(items => {
+            // find from the join into the products.product
+            items.product = order.joind.find(e => e._id.equals(items.product))
             // delete the imgs array and set the imgURL
-
             items.product.imgURL = items.product.imgs.map((e, i) => process.env.URL_ProductIMG + items.product._id + "/" + i)
             // deleting the buffer
             delete items.product.imgs
             return items
         })
+        // delete the joind
+        delete order.joind
+        delete req.user.email
+        order.owner = req.user
 
         res.send(order)
     } catch (error) {

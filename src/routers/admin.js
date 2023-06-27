@@ -4,10 +4,11 @@ const router = express.Router()
 const Collection = require('../db/modules/collection')
 const Products = require('../db/modules/products')
 const Users = require('../db/modules/users')
+const Order = require('../db/modules/order')
 const sharp = require('sharp')
 const multer = require('multer')
 const errorHandling = require('../controllers/ErrorHandling')
-const { Types: { ObjectId: { isValid } } } = require('mongoose')
+const { Types: { ObjectId: { isValid }, }, isValidObjectId, Types } = require('mongoose')
 // buffering upload
 const upload = multer({
     limits: {
@@ -149,18 +150,151 @@ router.patch('/collection/', async (req, res) => {
 router.delete('/collection/', async (req, res) => {
     try {
         // check for product
+        let collection = await Collection.findOne({ _id: req.body.id })
 
-        let collection = await Collection.deleteOne({ _id: req.body.id })
         if (!collection.acknowledged) {
             res.status(400).send();
             return;
         }
-
+        let prodects = await Products.findOne({ Collection: collection._id })
+        if (prodects) {
+            throw new Error("You can't delet the collection bcause there is porducts !")
+        }
         res.send()
     } catch (error) {
         errorHandling(res, error)
     }
 })
+// getAll orders
+router.get('/orders', async (req, res) => {
+    try {
+        let $skip = req.body.skip || 0
+        let $limit = req.body.limit || 5
+        let orders = await Order.aggregate([
+            {
+                $sort: { createdAt: -1 }
+            },
+            {
+                $lookup: {
+                    from: 'products',
+                    localField: 'products.product',
+                    foreignField: '_id',
+                    as: 'joind'
+                }
+            },
+            {
+                $skip
+            }, {
+                $limit
+            },
+            {
+                $project: {
+                    joind: {
+                        owner: 0
+                    },
+                    products: {
+                        _id: 0
+                    }
+                }
+            }
+        ]);
+        let TypeOfOrders = await Order.distinct("status")
+        orders.forEach(order => {
+            order.products = order.products.map(items => {
+                // find from the join into the products.product
+                items.product = order.joind.find(e => e._id.equals(items.product))
+                // delete the imgs array and set the imgURL
+                items.product.imgURL = items.product.imgs.map((e, i) => process.env.URL_ProductIMG + items.product._id + "/" + i)
+                // deleting the buffer
+                delete items.product.imgs
+                return items
+            })
+            // delete the joind
+            delete order.joind
 
-
+        })
+        res.send({ orders, TypeOfOrders })
+    } catch (error) {
+        errorHandling(res, error)
+    }
+})
+// update order status
+router.patch('/order', async (req, res) => {
+    try {
+        const id = req.body.id
+        if (!isValidObjectId(id)) {
+            throw new Error("The id is not valid")
+        }
+        let order = await Order.find({ id })
+        order.status = req.body.status
+        await order.save()
+        res.send(order)
+    } catch (error) {
+        errorHandling(res, error)
+    }
+})
+// get order by id
+router.get('/order/:id', async (req, res) => {
+    try {
+        if (!isValidObjectId(req.params.id)) {
+            throw new Error("Product isn't valid")
+        }
+        // Problem n+1 !!!
+        // let order = await Order.findOne({ _id: req.params.id }).populate({ path: 'products.product' }).populate({ path: "owner" }) 
+        let order = await Order.aggregate([
+            {
+                $match: { _id: new Types.ObjectId(req.params.id) }
+            },
+            {
+                $lookup: {
+                    from: 'products',
+                    localField: 'products.product',
+                    foreignField: '_id',
+                    as: 'joind'
+                }
+            }, {
+                $lookup: {
+                    from: 'users',
+                    localField: 'owner',
+                    foreignField: '_id',
+                    as: 'owner'
+                }
+            },
+            {
+                $unwind: "$owner"
+            }
+            ,
+            {
+                $project: {
+                    joind: {
+                        owner: 0
+                    },
+                    products: {
+                        _id: 0
+                    },
+                    owner: {
+                        tokens: 0,
+                        password: 0,
+                        email: 0
+                    }
+                }
+            }
+        ]);
+        order = order[0]
+        order.products = order.products.map(items => {
+            // find from the join into the products.product
+            items.product = order.joind.find(e => e._id.equals(items.product))
+            // delete the imgs array and set the imgURL
+            items.product.imgURL = items.product.imgs.map((e, i) => process.env.URL_ProductIMG + items.product._id + "/" + i)
+            // deleting the buffer
+            delete items.product.imgs
+            return items
+        })
+        // delete the joind
+        delete order.joind
+        res.send(order)
+    } catch (error) {
+        errorHandling(res, error)
+    }
+})
 module.exports = router

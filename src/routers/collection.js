@@ -8,7 +8,7 @@ const errorHandling = require('../controllers/ErrorHandling')
 // return all collections
 router.get('/all', async (req, res) => {
     try {
-        let collection = await Collection.find();
+        let collection = await Collection.find().sort({ createdAt: -1 });
         res.send(collection)
     } catch (error) {
         errorHandling(res, error)
@@ -33,22 +33,12 @@ router.post('/:id', async (req, res) => {
             },
         },
         {
-            $unwind: {
-                path: "$Collection"
-            },
-        }, {
             // get the owner of the product
             $lookup: {
                 from: "users",
                 localField: "owner",
                 foreignField: "_id",
                 as: "owner"
-            },
-        },
-        {
-            // jsut one value
-            $unwind: {
-                path: "$owner"
             },
         }, {
             // Filtering the out data

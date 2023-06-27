@@ -18,18 +18,19 @@ const Sch = new mongoose.Schema({
     owner: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
-        ref: "user",
+        ref: "users",
         index: true
     },
     status: {
         type: String,
-        default: "Hold"
+        default: "Hold",
+        index: true
     }
 }, {
     timestamps: true
 });
 
 
-const Oder = mongoose.model('order', Sch);
+const Order = mongoose.model('order', Sch);
 
-module.exports = Oder
+module.exports = Order
