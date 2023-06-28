@@ -30,7 +30,8 @@ const Schema = new mongoose.Schema({
         token: {
             type: String
         }
-    }]
+    }],
+    passwordCode: String
 }, {
     timestamps: true
 })
