@@ -3,6 +3,7 @@ let User = require('../db/modules/users')
 let errorHandling = require('../controllers/ErrorHandling')
 const auth = async (req, res, next) => {
     try {
+
         if (!req.headers.authorization) {
             throw new Error("Headers missing !")
         }

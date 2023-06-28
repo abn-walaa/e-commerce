@@ -9,6 +9,7 @@ const sharp = require('sharp')
 const multer = require('multer')
 const errorHandling = require('../controllers/ErrorHandling')
 const { Types: { ObjectId: { isValid }, }, isValidObjectId, Types } = require('mongoose')
+const User = require('../db/modules/users')
 // buffering upload
 const upload = multer({
     limits: {
@@ -23,7 +24,7 @@ const upload = multer({
     }
 })
 //ADD products
-router.post('/product', upload.array('imgs', 10), async (req, res) => {
+router.post('/product/', upload.array('imgs', 10), async (req, res) => {
     try {
         if (!req.files[0]?.buffer) {
             throw new Error("imgs missing")
@@ -116,7 +117,7 @@ router.delete('/product/', async (req, res) => {
     }
 })
 // ADD collection 
-router.post('/collection', async (req, res) => {
+router.post('/collection/', async (req, res) => {
     try {
         // check for product
         let collection = new Collection({
@@ -166,7 +167,7 @@ router.delete('/collection/', async (req, res) => {
     }
 })
 // getAll orders
-router.get('/orders', async (req, res) => {
+router.get('/orders/', async (req, res) => {
     try {
         let $skip = req.body.skip || 0
         let $limit = req.body.limit || 5
@@ -181,7 +182,16 @@ router.get('/orders', async (req, res) => {
                     foreignField: '_id',
                     as: 'joind'
                 }
+            }, {
+                $lookup: {
+                    from: 'users',
+                    localField: 'owner',
+                    foreignField: '_id',
+                    as: 'owner'
+                }
             },
+            { $unwind: "$owner" }
+            ,
             {
                 $skip
             }, {
@@ -297,4 +307,88 @@ router.get('/order/:id', async (req, res) => {
         errorHandling(res, error)
     }
 })
+// get Orders of user
+router.get('/orders/user/', async (req, res) => {
+    try {
+        console.log(req.body)
+        let id = req.body.id
+
+        if (!isValidObjectId(id)) {
+            throw new Error("ID is not valid")
+        }
+        // Problem n+1 !!!
+        // let order = await Order.findOne({ _id: req.params.id }).populate({ path: 'products.product' }).populate({ path: "owner" }) 
+        let orders = await Order.aggregate([
+            {
+                $match: { owner: new Types.ObjectId(id) }
+            },
+            {
+                $lookup: {
+                    from: 'products',
+                    localField: 'products.product',
+                    foreignField: '_id',
+                    as: 'joind'
+                }
+            }, {
+                $lookup: {
+                    from: 'users',
+                    localField: 'owner',
+                    foreignField: '_id',
+                    as: 'owner'
+                }
+            },
+            {
+                $unwind: "$owner"
+            }
+            ,
+            {
+                $project: {
+                    joind: {
+                        owner: 0
+                    },
+                    products: {
+                        _id: 0
+                    },
+                    owner: {
+                        tokens: 0,
+                        password: 0,
+                        email: 0
+                    }
+                }
+            }
+        ]);
+        if (!orders) {
+            throw new Error("There is no Orders!")
+        }
+        orders.forEach(order => {
+            order.products = order.products.map(items => {
+                // find from the join into the products.product
+                items.product = order.joind.find(e => e._id.equals(items.product))
+                // delete the imgs array and set the imgURL
+                items.product.imgURL = items.product.imgs.map((e, i) => process.env.URL_ProductIMG + items.product._id + "/" + i)
+                // deleting the buffer
+                delete items.product.imgs
+                return items
+            })
+            // delete the joind
+            delete order.joind
+        })
+        res.send(orders)
+    } catch (error) {
+        errorHandling(res, error)
+    }
+})
+
+// getAll users
+router.get('/users', async (req, res) => {
+    try {
+        let skip = req.body.skip || 0
+        let limit = req.body.limit || 10
+        let users = await User.find({}, {}, { skip, limit })
+        res.send(users)
+    } catch (error) {
+        errorHandling(res, error)
+    }
+})
+
 module.exports = router

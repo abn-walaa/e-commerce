@@ -67,7 +67,8 @@ Schema.statics.checkUser = async (email, password) => {
     if (!user) {
         throw new Error("No user found !")
     }
-    const check = bcrypt.compare(password, user.password);
+    const check = await bcrypt.compare(password, user.password);
+
     if (!check) {
         throw new Error("Password is wrong !")
     }

@@ -1,7 +1,7 @@
 
 const errorHandling = (res, error) => {
     res.status(400);
-
+    console.log(error)
     console.log(error.message, error.code)
     // if the unique
     let errors = {};
