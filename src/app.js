@@ -23,6 +23,9 @@ app.use('/admin', auth, isAdmin, admin)
 // order 
 const order = require('./routers/order')
 app.use('/order/', auth, order)
+// User
+const user = require('./routers/user')
+app.use('/user/', auth, user)
 app.listen(3000, () => {
     console.log("server is up")
 })

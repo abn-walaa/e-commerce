@@ -59,6 +59,7 @@ Schema.methods.toJSON = function () {
     user = user.toObject()
     delete user.password
     delete user.tokens
+    delete user.passwordCode
     return user
 }
 
