@@ -60,7 +60,7 @@ router.post('/all', async (req, res) => {
         },])
         // delete the img for the size of the requet and set a img url
         products.forEach(product => {
-            product.imgURL = product.imgs.map((e, i) => process.env.URL_ProductIMG + product._id + "/" + i)
+            product.imgURL = product.imgs.map((e, i) => process.env.URL + "product/" + product._id + "/" + i)
             delete product.imgs
         })
         res.send(products)

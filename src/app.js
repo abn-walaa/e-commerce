@@ -15,6 +15,9 @@ app.use('/products', product)
 //  collections 
 const collections = require('./routers/collection')
 app.use('/collection', collections)
+// Slider
+const sliders = require('./routers/slider')
+app.use('/slider/', sliders)
 // admin
 const auth = require('./middleware/auth')
 const isAdmin = require('./middleware/isAdmin')
@@ -26,6 +29,7 @@ app.use('/order/', auth, order)
 // User
 const user = require('./routers/user')
 app.use('/user/', auth, user)
+
 app.listen(3000, () => {
     console.log("server is up")
 })

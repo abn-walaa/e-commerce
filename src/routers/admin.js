@@ -390,5 +390,36 @@ router.get('/users', async (req, res) => {
         errorHandling(res, error)
     }
 })
-
+// ADD SLIDER
+const Slider = require('../db/modules/slider')
+router.post('/slider', upload.single('img'), async (req, res) => {
+    try {
+        if (!req.file) {
+            throw new Error("Upload a img")
+        }
+        let buffer = await sharp(req.file.buffer).webp({ lossless: true }).toBuffer()
+        let slider = await Slider.create({ buffer, URL: req.body.url, owner: req.user.id })
+        res.send(slider)
+    } catch (error) {
+        errorHandling(res, error)
+    }
+})
+// Delete a slider
+router.delete('/slider', async (req, res) => {
+    try {
+        // check for the id
+        if (!isValid(req.body.id)) {
+            throw new Error("The id is not valed")
+        }
+        // delete a slider
+        let slider = await Slider.deleteOne({ _id: req.body.id })
+        // check
+        if (!slider.acknowledged) {
+            throw new Error("Not found !")
+        }
+        res.send()
+    } catch (error) {
+        errorHandling(res, error)
+    }
+})
 module.exports = router
