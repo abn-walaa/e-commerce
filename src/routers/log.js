@@ -33,6 +33,10 @@ router.post('/logup', async (req, res) => {
 // log in user
 router.post('/login', async (req, res) => {
     try {
+        console.log(req.body)
+        if (!req.body.email || !req.body.email) {
+            throw new Error('Missing info')
+        }
         let user = await User.checkUser(req.body.email, req.body.password)
 
         let token = await user.genToken()
@@ -74,13 +78,13 @@ router.post('/forgotPassword', async (req, res) => {
         }
         let user = await User.findOne({ email: req.body.email })
         if (!user) {
-            throw new Erorr("Email not valid")
+            throw new Error("Email not valid")
         }
         let code = v1().substring(0, 8)
         user.passwordCode = code
         let token = jwt.sign({ id: user.id, code }, process.env.JWT, { expiresIn: "3h" })
         await user.save()
-        email(user.email, code)
+        email(user.email, code).catch(e => console.log(e))
         res.send({ token })
     } catch (error) {
         errorHandling(res, error)

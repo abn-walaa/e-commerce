@@ -26,7 +26,8 @@ const upload = multer({
 //ADD products
 router.post('/product/', upload.array('imgs', 10), async (req, res) => {
     try {
-        if (!req.files[0]?.buffer) {
+
+        if (!req.files) {
             throw new Error("imgs missing")
         }
         // check collection

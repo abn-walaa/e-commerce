@@ -6,7 +6,7 @@ const Products = require('../db/modules/products')
 const mongoose = require('mongoose')
 const errorHandling = require('../controllers/ErrorHandling')
 // return all collections
-router.get('/all', async (req, res) => {
+router.get('/', async (req, res) => {
     try {
         let collection = await Collection.find().sort({ createdAt: -1 });
         res.send(collection)
@@ -19,7 +19,7 @@ router.get('/all', async (req, res) => {
 router.post('/:id', async (req, res) => {
     try {
         let $skip = req.body.skip || 0
-        let $limit = req.body.limit || 5
+        let $limit = req.body.limit || 10
 
         let products = await Products.aggregate([{
             $match: { "Collection": { $eq: new mongoose.Types.ObjectId(req.params.id) } }
@@ -31,6 +31,12 @@ router.post('/:id', async (req, res) => {
                 foreignField: "_id",
                 as: "Collection"
             },
+
+        },
+        {
+            $unwind: {
+                path: "$Collection"
+            }
         },
         {
             // get the owner of the product
@@ -39,7 +45,7 @@ router.post('/:id', async (req, res) => {
                 localField: "owner",
                 foreignField: "_id",
                 as: "owner"
-            },
+            }
         }, {
             // Filtering the out data
             $project: {
@@ -59,12 +65,18 @@ router.post('/:id', async (req, res) => {
                 createdAt: 1,
                 updatedAt: 1
             }
-        }, { $skip }, {
+        },
+        { $skip }, {
             $limit
         },])
+
+        if (!products) {
+            res.status(404).send()
+            return
+        }
         // delete the img for the size of the requet and set a img url
         products.forEach(product => {
-            product.imgURL = product.imgs.map((e, i) => process.env.URL_ProductIMG + product._id + "/" + i)
+            product.imgURL = product.imgs.map((e, i) => process.env.URL + "products/" + product._id + "/" + i)
             delete product.imgs
         })
         products = products.map(product => {

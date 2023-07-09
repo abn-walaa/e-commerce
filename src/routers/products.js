@@ -61,6 +61,7 @@ router.post('/all', async (req, res) => {
         // delete the img for the size of the requet and set a img url
         products.forEach(product => {
             product.imgURL = product.imgs.map((e, i) => process.env.URL + "product/" + product._id + "/" + i)
+
             delete product.imgs
         })
         res.send(products)
@@ -72,7 +73,8 @@ router.post('/all', async (req, res) => {
 router.get('/:id', async (req, res) => {
     try {
         let id = req.params.id
-        let product = await Products.findById(id).populate('collection');
+        let product = await Products.findById(id).populate('Collection');
+
         res.send(product)
     } catch (error) {
         errorHandling(res, error)
@@ -81,6 +83,7 @@ router.get('/:id', async (req, res) => {
 // router get prodect img
 router.get('/:id/:num', async (req, res) => {
     try {
+
         let product = await Products.findById(req.params.id);
         res.set('Content-Type', 'image/webp');
         res.send(product.imgs[req.params.num].buffer)

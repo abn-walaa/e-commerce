@@ -19,7 +19,7 @@ const errorHandling = (res, error) => {
 
         Object.keys(error.errors).forEach(e => {
             if (error.errors[e].properties) {
-                errors.message += error.errors[e].properties?.message + " "
+                errors.message += e + ":" + error.errors[e].properties?.message + ","
                 errors[e] = error.errors[e].properties?.message
             } else if (error.errors[e].message) {
                 errors.message += "failed for " + e + " "
@@ -33,7 +33,7 @@ const errorHandling = (res, error) => {
     }
 
 
-    res.send({ error: error.message })
+    res.send({ errors: { message: error.message } })
 }
 
 module.exports = errorHandling

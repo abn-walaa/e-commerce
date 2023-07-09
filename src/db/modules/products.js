@@ -33,7 +33,7 @@ const Sch = new mongoose.Schema({
 Sch.methods.toJSON = function () {
     let product = this
     product = product.toObject()
-    product.imgURL = product.imgs.map((e, i) => process.env.URL_ProductIMG + product._id + "/" + i)
+    product.imgURL = product.imgs.map((e, i) => process.env.URL + "products/" + product._id + "/" + i)
     delete product.imgs
     delete product.owner
 

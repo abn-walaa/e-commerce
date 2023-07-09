@@ -5,6 +5,9 @@ require('./db/connection')
 //
 const express = require('express')
 const app = express()
+
+const cors = require('cors')
+app.use(cors());
 app.use(express.json())
 // log router 
 const log = require('./routers/log')
@@ -30,6 +33,6 @@ app.use('/order/', auth, order)
 const user = require('./routers/user')
 app.use('/user/', auth, user)
 
-app.listen(3000, () => {
+app.listen(3001, () => {
     console.log("server is up")
 })

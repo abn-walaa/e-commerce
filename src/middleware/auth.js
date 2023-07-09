@@ -15,6 +15,7 @@ const auth = async (req, res, next) => {
 
         let id = jwt.verify(token, process.env.JWT)
         let user = await User.findOne({ id: id.id, "tokens.token": token })
+
         if (!user) {
             throw new Error("not auth")
         }
@@ -22,7 +23,7 @@ const auth = async (req, res, next) => {
         req.token = token;
         next()
     } catch (error) {
-        errorHandling(res, error)
+        errorHandling(res, { message: "don't have access" })
     }
 }
 module.exports = auth
