@@ -7,7 +7,7 @@ const errorHandling = require('../controllers/ErrorHandling')
 router.post('/all', async (req, res) => {
     try {
         let $skip = req.body.skip || 0
-        let $limit = req.body.limit || 5
+        let $limit = req.body.limit || 10
 
         let products = await Products.aggregate([{
             // get the collection info

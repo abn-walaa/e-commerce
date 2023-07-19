@@ -1,15 +1,16 @@
 {
   "name": "small-e-comers",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "��#\u0000 \u0000e\u0000-\u0000c\u0000o\u0000m\u0000m\u0000e\u0000r\u0000c\u0000e\u0000\r\u0000 \u0000",
+  "main": "src/app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node src/app.js"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/abn-walaa/e-commerce.git"
   },
+  "bin": "src/app.js",
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -29,5 +30,6 @@
     "sharp": "^0.32.1",
     "uuid": "^9.0.0",
     "validator": "^13.9.0"
-  }
+  },
+  "devDependencies": {}
 }

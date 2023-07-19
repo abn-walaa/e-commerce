@@ -296,7 +296,7 @@ router.get('/order/:id', async (req, res) => {
             // find from the join into the products.product
             items.product = order.joind.find(e => e._id.equals(items.product))
             // delete the imgs array and set the imgURL
-            items.product.imgURL = items.product.imgs.map((e, i) => process.env.URL_ProductIMG + items.product._id + "/" + i)
+            items.product.imgURL = items.product.imgs.map((e, i) => process.env.URL + "products/" + items.product._id + "/" + i)
             // deleting the buffer
             delete items.product.imgs
             return items
@@ -309,7 +309,7 @@ router.get('/order/:id', async (req, res) => {
     }
 })
 // get Orders of user
-router.get('/orders/user/', async (req, res) => {
+router.post('/orders/user/', async (req, res) => {
     try {
         console.log(req.body)
         let id = req.body.id
@@ -366,7 +366,8 @@ router.get('/orders/user/', async (req, res) => {
                 // find from the join into the products.product
                 items.product = order.joind.find(e => e._id.equals(items.product))
                 // delete the imgs array and set the imgURL
-                items.product.imgURL = items.product.imgs.map((e, i) => process.env.URL_ProductIMG + items.product._id + "/" + i)
+
+                items.product.imgURL = items.product.imgs.map((e, i) => process.env.URL + "products/" + items.product._id + "/" + i)
                 // deleting the buffer
                 delete items.product.imgs
                 return items
@@ -381,7 +382,7 @@ router.get('/orders/user/', async (req, res) => {
 })
 
 // getAll users
-router.get('/users', async (req, res) => {
+router.post('/users', async (req, res) => {
     try {
         let skip = req.body.skip || 0
         let limit = req.body.limit || 10

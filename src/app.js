@@ -33,6 +33,9 @@ app.use('/order/', auth, order)
 const user = require('./routers/user')
 app.use('/user/', auth, user)
 
-app.listen(3001, () => {
+app.use('*', (req, res) => {
+    res.status(404).send()
+})
+app.listen(3000, () => {
     console.log("server is up")
 })
